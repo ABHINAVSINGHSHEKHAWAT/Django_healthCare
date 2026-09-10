@@ -6,15 +6,35 @@ from .serializers import MappingSerializer
 
 
 class MappingListCreateView(generics.ListCreateAPIView):
-    queryset = PatientDoctorMapping.objects.all()
     serializer_class = MappingSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return PatientDoctorMapping.objects.filter(
+            patient__created_by=self.request.user
+        )
+
+    def perform_create(self, serializer):
+        patient = serializer.validated_data["patient"]
+
+        if patient.created_by != self.request.user:
+            from rest_framework.exceptions import PermissionDenied
+
+            raise PermissionDenied(
+                "You can only create mappings for your own patients."
+            )
+
+        serializer.save()
 
 
 class MappingDetailView(generics.RetrieveDestroyAPIView):
-    queryset = PatientDoctorMapping.objects.all()
     serializer_class = MappingSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return PatientDoctorMapping.objects.filter(
+            patient__created_by=self.request.user
+        )
 
 
 class PatientDoctorsView(generics.ListAPIView):
@@ -25,5 +45,6 @@ class PatientDoctorsView(generics.ListAPIView):
         patient_id = self.kwargs["patient_id"]
 
         return PatientDoctorMapping.objects.filter(
-            patient_id=patient_id
+            patient_id=patient_id,
+            patient__created_by=self.request.user,
         )
