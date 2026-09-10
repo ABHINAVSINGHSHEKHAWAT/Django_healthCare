@@ -1,9 +1,9 @@
-from django.contrib import admin
-from django.urls import include, path
+from django.urls import path
+
+from .views import PatientListCreateView, PatientDetailView
 
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("api/auth/", include("accounts.urls")),
-    path("api/patients/", include("patients.urls")),
+    path("", PatientListCreateView.as_view(), name="patient-list-create"),
+    path("<int:pk>/", PatientDetailView.as_view(), name="patient-detail"),
 ]
